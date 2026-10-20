@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 from contextlib import contextmanager
 from datetime import date, datetime, timezone
@@ -150,14 +151,29 @@ def _enable_sqlite_foreign_keys(dbapi_connection, _connection_record) -> None:
 
 
 def init_db(database_url: str | None = None) -> sessionmaker[Session]:
-    """Create the local SQLite schema and return the configured session maker."""
+    """Create the schema and return the configured session maker.
+
+    Set DATABASE_URL to use a hosted database (for example, PostgreSQL on
+    Vercel). When it is unset, local development uses the SQLite file.
+    """
     global _engine, _session_factory
     if database_url is None:
+        database_url = os.getenv("DATABASE_URL")
+    if not database_url:
         DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
         database_url = f"sqlite:///{DATABASE_PATH.as_posix()}"
+    elif database_url.startswith("postgres://"):
+        # Marketplace integrations may expose the legacy postgres:// scheme.
+        database_url = "postgresql+psycopg://" + database_url.removeprefix("postgres://")
+    elif database_url.startswith("postgresql://"):
+        database_url = "postgresql+psycopg://" + database_url.removeprefix("postgresql://")
     if _engine is not None:
         _engine.dispose()
-    connect_args = {"check_same_thread": False, "timeout": 15} if database_url.startswith("sqlite") else {}
+    connect_args = (
+        {"check_same_thread": False, "timeout": 15}
+        if database_url.startswith("sqlite")
+        else {"connect_timeout": 10} if database_url.startswith("postgresql+") else {}
+    )
     _engine = create_engine(database_url, connect_args=connect_args, future=True)
     _session_factory = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False, class_=Session)
     Base.metadata.create_all(_engine)
