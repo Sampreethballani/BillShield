@@ -1,0 +1,7 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.billshield.sqlite3*
+.billshield_sqlalchemy.sqlite3*
+.vercel/

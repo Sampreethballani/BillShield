@@ -1,0 +1,10 @@
+python-dotenv
+requests
+gradio>=5.0
+fastapi
+uvicorn
+PyMuPDF
+pytesseract
+Pillow
+pydantic>=2.0
+SQLAlchemy>=2.0
