@@ -4,7 +4,7 @@ Turn a bill you don't trust into one message worth sending. BillShield reads a b
 
 ## Run locally on Windows
 
-1. Install Python 3.12 or later and Tesseract OCR. If Tesseract is installed with winget, run `winget install --exact --id UB-Mannheim.TesseractOCR`, then reopen PowerShell.
+1. Install Python 3.12 or later. Tesseract OCR is optional; when absent, BillShield uses Groq vision OCR instead.
 2. In this folder, copy `.env.example` to `.env` and put your Groq API key in `.env`.
 3. Install dependencies and start BillShield:
 
@@ -25,4 +25,4 @@ The app exports a FastAPI `app` from the repository-root `app.py`, which Vercel 
 2. Add `GROQ_API_KEY` as a Vercel environment variable. Do not commit `.env`.
 3. Connect a hosted PostgreSQL database and set `DATABASE_URL` for the Vercel project. Without it, BillShield falls back to a local SQLite file, which is not durable on Vercel.
 
-Vercel's standard Python runtime does not install the system Tesseract executable. Text-based PDFs can be processed without OCR, but scanned PDFs and images need a separately configured OCR provider before those uploads will work in the deployed app. Local Windows development still uses Tesseract as described above.
+If the system Tesseract executable is unavailable (as on the standard Vercel Python runtime), BillShield uses Groq's vision model to transcribe scanned pages. That OCR step sends the bill image to Groq; users should cover personal identifiers before uploading. Arithmetic and discrepancy calculations remain in Python code. The Groq API key stays server-side.
